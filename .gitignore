@@ -1,0 +1,5 @@
+#how git ignore operates
+.vscode/
+__pycache__/
+*.pyc
+.env
