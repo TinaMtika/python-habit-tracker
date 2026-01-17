@@ -70,7 +70,7 @@ def cli():
         elif choice == "Seed Test Data (Fixtures)":
             # This allows for immediate verification of the analytics engine
             # without waiting for real-time user data.
-            seed_data.seed_data()
+            seed_data.seed_db()
             print("\n✅ Database seeded with 4 weeks of historical logs.")
             print("   (Includes one 28-day streak and habits with intentional gaps)\n")
             
