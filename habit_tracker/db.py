@@ -61,3 +61,11 @@ def get_habit_data(name, db_name="habits.db"):
     dates = [row[0] for row in cur.fetchall()]
     con.close()
     return dates
+def delete_habit(name, db_name="habits.db"):
+    """Remove a habit and all its tracked completions from the database."""
+    con = get_db_connection(db_name)
+    cur = con.cursor()
+    cur.execute("DELETE FROM tracker WHERE habit_name=?", (name,))
+    cur.execute("DELETE FROM habits WHERE name=?", (name,))
+    con.commit()
+    con.close()
