@@ -93,6 +93,17 @@ def test_delete_habit(setup_db):
     data = db.get_habit_data("TestRead", TEST_DB)
     assert len(data) == 0
 
+def test_edit_habit(setup_db):
+    """Ensure a habit's name and periodicity can be updated."""
+    db.add_habit("OldName", "Daily", TEST_DB)
+    db.increment_habit("OldName", "2024-01-01", TEST_DB)
+    db.edit_habit("OldName", "NewName", "Weekly", TEST_DB)
+    
+    old_data = db.get_habit_data("OldName", TEST_DB)
+    new_data = db.get_habit_data("NewName", TEST_DB)
+    
+    assert len(old_data) == 0
+    assert "2024-01-01" in new_data
 
 def test_increment_habit_multiple_dates(setup_db):
     """Ensure multiple completions are all stored correctly."""
