@@ -1,71 +1,70 @@
 import sqlite3
 from datetime import datetime
 
-def get_db_connection(db_name="habits.db"):
-    con = sqlite3.connect(db_name)
-    return con
+def get_db():
+    """Establishes and returns a connection to the SQLite database."""
+    return sqlite3.connect("habits.db")
 
-def create_tables(db_name="habits.db"):
-    con = get_db_connection(db_name)
-    cur = con.cursor()
-    
-    # Table for storing the Habits
-    cur.execute("""
+def create_tables():
+    """Initializes the database schemas for habits and tracking logs."""
+    db = get_db()
+    cursor = db.cursor()
+    # Table to store the habit definitions
+    cursor.execute('''
         CREATE TABLE IF NOT EXISTS habits (
             name TEXT PRIMARY KEY,
             periodicity TEXT,
             creation_date TEXT
         )
-    """)
-    
-    # Table for storing the specific dates a habit was completed
-    cur.execute("""
+    ''')
+    # Table to store the individual completion logs
+    cursor.execute('''
         CREATE TABLE IF NOT EXISTS tracker (
+            habitName TEXT,
             date TEXT,
-            habit_name TEXT,
-            FOREIGN KEY (habit_name) REFERENCES habits(name)
+            FOREIGN KEY (habitName) REFERENCES habits(name)
         )
-    """)
-    
-    con.commit()
-    con.close()
+    ''')
+    db.commit()
+    db.close()
 
-def add_habit(name, periodicity, db_name="habits.db"):
-    con = get_db_connection(db_name)
-    cur = con.cursor()
+def add_habit(name: str, periodicity: str):
+    """Inserts a new habit into the database."""
+    db = get_db()
+    cursor = db.cursor()
     creation_date = datetime.now().strftime("%Y-%m-%d")
-    # Using INSERT OR IGNORE to prevent crashing if habit exists
-    cur.execute("INSERT OR IGNORE INTO habits VALUES (?, ?, ?)", 
-                (name, periodicity, creation_date))
-    con.commit()
-    con.close()
+    cursor.execute("INSERT OR IGNORE INTO habits VALUES (?, ?, ?)", 
+                   (name, periodicity, creation_date))
+    db.commit()
+    db.close()
 
-def increment_habit(name, date=None, db_name="habits.db"):
-    """
-    Logs a completion for a specific date. 
-    If date is None, uses today.
-    """
-    con = get_db_connection(db_name)
-    cur = con.cursor()
-    if not date:
-        date = datetime.now().strftime("%Y-%m-%d")
-    
-    cur.execute("INSERT INTO tracker VALUES (?, ?)", (date, name))
-    con.commit()
-    con.close()
+def increment_habit(name: str):
+    """Records a completion for a habit on the current date."""
+    db = get_db()
+    cursor = db.cursor()
+    today = datetime.now().strftime("%Y-%m-%d")
+    cursor.execute("INSERT INTO tracker VALUES (?, ?)", (name, today))
+    db.commit()
+    db.close()
 
-def get_habit_data(name, db_name="habits.db"):
-    con = get_db_connection(db_name)
-    cur = con.cursor()
-    cur.execute("SELECT date FROM tracker WHERE habit_name=?", (name,))
-    dates = [row[0] for row in cur.fetchall()]
-    con.close()
-    return dates
-def delete_habit(name, db_name="habits.db"):
-    """Remove a habit and all its tracked completions from the database."""
-    con = get_db_connection(db_name)
-    cur = con.cursor()
-    cur.execute("DELETE FROM tracker WHERE habit_name=?", (name,))
-    cur.execute("DELETE FROM habits WHERE name=?", (name,))
-    con.commit()
-    con.close()
+def edit_habit(old_name: str, new_name: str, new_periodicity: str):
+    """Updates the name and periodicity of an existing habit and its logs."""
+    db = get_db()
+    cursor = db.cursor()
+    # Update the main habits table
+    cursor.execute("UPDATE habits SET name=?, periodicity=? WHERE name=?", 
+                   (new_name, new_periodicity, old_name))
+    # Update the foreign keys in the tracker table so history isn't lost
+    cursor.execute("UPDATE tracker SET habitName=? WHERE habitName=?", 
+                   (new_name, old_name))
+    db.commit()
+    db.close()
+
+def delete_habit(name: str):
+    """Permanently removes a habit and all associated tracking data."""
+    db = get_db()
+    cursor = db.cursor()
+    cursor.execute("DELETE FROM habits WHERE name=?", (name,))
+    cursor.execute("DELETE FROM tracker WHERE habitName=?", (name,))
+    db.commit()
+    db.close()
