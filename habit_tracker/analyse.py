@@ -40,7 +40,7 @@ def get_habit_history(name):
     """
     con = get_db_connection()
     cur = con.cursor()
-    cur.execute("SELECT date FROM tracker WHERE habit_name=? ORDER BY date ASC", (name,))
+    cur.execute("SELECT date FROM tracker WHERE habitName=? ORDER BY date ASC", (name,))
     return [row[0] for row in cur.fetchall()]
 
 def calculate_streak(date_strings, periodicity="Daily"):
